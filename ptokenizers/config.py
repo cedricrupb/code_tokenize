@@ -4,6 +4,11 @@ class TokenizationConfig:
     def __init__(self, lang, **kwargs):
         self.lang = lang
 
+        # A list of all statement node defined in the language
+        self.statement_types = [
+            "*_statement", "*_definition"
+        ]
+
     
     def update(self, kwargs):
         for k, v in kwargs.iteritems():

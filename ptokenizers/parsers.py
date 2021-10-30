@@ -45,21 +45,27 @@ class ASTParser:
 
 # Utils ------------------------------------------------
 
-def traverse_tree(root_node):
+def _traverse_tree(root_node, stop_fn = None):
 
-    queue = [root_node]
-    while len(queue) > 0:
-        node = queue.pop(0)
+    if stop_fn is None: stop_fn = lambda x: False
+
+    stack = [root_node]
+    while len(stack) > 0:
+        node = stack.pop(-1)
 
         if node.type == "string":
             yield node
             continue
 
         for child in node.children:
-            queue.append(child)
+            if stop_fn(child): continue
+            stack.append(child)
 
         if not node.children:
             yield node 
+
+def traverse_tree(root_node, stop_fn = None):
+    return list(_traverse_tree(root_node, stop_fn))[::-1]
 
 
 def match_span(source_tree, source_lines):
@@ -73,9 +79,8 @@ def match_span(source_tree, source_lines):
     source_area     = source_lines[start_line:end_line + 1]
     
     if start_line == end_line:
-        source_area[0] = source_area[0][start_char:end_char]
+        return source_area[0][start_char:end_char]
     else:
         source_area[0]  = source_area[0][start_char:]
         source_area[-1] = source_area[-1][:end_char]
-
-    return "\n".join(source_area)
+        return "\n".join(source_area)
