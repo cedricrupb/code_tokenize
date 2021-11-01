@@ -13,7 +13,7 @@ By relating each token to an AST node, it is possible to extend the program repr
 ## Installation
 The package is currently only tested under Python 3. It can be installed via:
 ````
-pip install code_tokenizer
+pip install code-tokenize
 ````
 
 
