@@ -1,29 +1,35 @@
 
+import os
 from functools import lru_cache
 from tree_sitter import Language, Parser
 
+import logging as logger
 
-# Ultimately replace with AutoLoading --------------------------------
-
-PATH_TO_LANG = 'build/misc-language.so'
-
-Language.build_library(
-  PATH_TO_LANG,
-  [
-    'build/tree-sitter-python',
-    'build/tree-sitter-java'
-  ]
-)
+# For autoloading
+import requests
+from git import Repo
 
 
-@lru_cache
+# Automatic loading of Tree-Sitter parsers --------------------------------
+
 def load_language(lang):
-    """Load Tree Sitter language (cached)"""
 
-    if lang == 'python': return Language(PATH_TO_LANG, 'python')
-    if lang == 'java':   return Language(PATH_TO_LANG, 'java')
+    cache_path = _path_to_local()
+    
+    compiled_lang_path = os.path.join(cache_path, "%s-lang.so" % lang)
+    source_lang_path   = os.path.join(cache_path, "tree-sitter-%s" % lang)
 
-    raise ValueError("No available language parse for %s" % lang)
+    if os.path.isfile(compiled_lang_path):
+        return Language(compiled_lang_path, lang)
+    
+    if os.path.exists(source_lang_path) and os.path.isdir(source_lang_path):
+        logger.warn("Compiling language for %s" % lang)
+        _compile_lang(source_lang_path, compiled_lang_path)
+        return load_language(lang)
+
+    logger.warn("Autoloading AST parser for %s: Start download from Github." % lang)
+    _clone_parse_def_from_github(lang, source_lang_path)
+    return load_language(lang)
 
 # Parser ---------------------------------------------------------------
 
@@ -86,3 +92,63 @@ def match_span(source_tree, source_lines):
         source_area[0]  = source_area[0][start_char:]
         source_area[-1] = source_area[-1][:end_char]
         return "\n".join(source_area)
+
+
+# Auto Load Languages --------------------------------------------------
+
+PATH_TO_LOCALCACHE = None
+
+def _path_to_local():
+    global PATH_TO_LOCALCACHE
+    
+    if PATH_TO_LOCALCACHE is None:
+        current_path = os.path.abspath(__file__)
+        
+        while os.path.basename(current_path) != "code_tokenize":
+            current_path = os.path.dirname(current_path)
+        
+        current_path = os.path.dirname(current_path) # Top dir
+        PATH_TO_LOCALCACHE = os.path.join(current_path, "build")
+        
+    return PATH_TO_LOCALCACHE
+
+
+def _compile_lang(source_path, compiled_path):
+    logger.debug("Compile language from %s" % compiled_path)
+
+    Language.build_library(
+        compiled_path,
+        [
+            source_path
+        ]
+    )
+
+
+# Auto Clone from Github --------------------------------
+    
+def _exists_url(url):
+    req = requests.get(url)
+    return req.status_code == 200
+
+
+def _clone_parse_def_from_github(lang, cache_path):
+    
+    # Start by testing whethe repository exists
+    REPO_URL = "https://github.com/tree-sitter/tree-sitter-%s" % lang
+
+    if not _exists_url(REPO_URL):
+        raise ValueError("There is no parsing def for language %s available." % lang)
+
+    logger.warn("Start cloning the parser definition from Github.")
+    try:  
+        Repo.clone_from(REPO_URL, cache_path)
+    except Exception:
+        raise ValueError("To autoload a parsing definition, git needs to be installed on the system!")
+
+
+
+
+
+
+
+
