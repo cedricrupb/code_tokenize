@@ -1,6 +1,7 @@
-# (P)tokenizers
+[head-image]: https://github.com/cedricrupb/ptokenizers/raw/main/resources/code_tokenize.png
 
-A library for fast AST backed **p**rogram **tokenization**.
+![code(dot)tokenize][head-image]
+------------------------------------------------
 
 ## AST backed tokenization
 Programminng Language Processing (PLP) brings the capabilities of modern NLP systems to the world of programming languages. 
