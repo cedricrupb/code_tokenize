@@ -4,11 +4,10 @@
 
 ------------------------------------------------
 
-## AST backed tokenization
 Programminng Language Processing (PLP) brings the capabilities of modern NLP systems to the world of programming languages. 
-To achieve high performance PLP systems,existing methods often take advantage of the fully defined nature of programminng languages. Especially the syntactical structure can be exploited.
+To achieve high performance PLP systems, existing methods often take advantage of the fully defined nature of programminng languages. Especially the syntactical structure can be exploited to gain knowledge about programs.
 
-AST backed tokenization provide easy access to the syntactic structure of a program. The tokenizer converts a program into a sequence of program tokens ready for further end-to-end processing.
+code(dot)tokenize provides easy access to the syntactic structure of a program. The tokenizer converts a program into a sequence of program tokens ready for further end-to-end processing.
 By relating each token to an AST node, it is possible to extend the program representation easily with further syntactic information.
 
 ## Library highlights
