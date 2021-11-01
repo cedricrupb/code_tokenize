@@ -1,6 +1,5 @@
 
 import os
-from functools import lru_cache
 from tree_sitter import Language, Parser
 
 import logging as logger
