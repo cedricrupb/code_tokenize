@@ -36,4 +36,12 @@ lang = "python")
 * **Most programming languages supported** Since all our tokenizers are backed by [Tree-Sitter](https://tree-sitter.github.io/tree-sitter/) we support a long list of programming languages. This also includes popular languages such as Python, Java and JavaScript.
 
 
+## Roadmap
+code(dot)tokenize is currently under active development. To enable application for various types of PLP methods, the following features are planned for future versions:
+
+- **Token tagging** Automatically identify certain token types including variable usages, definition and type usages.
+
+- **Syntactic relations** Automatically identify syntactic relations between tokens. This includes read and write relations or structural dependencies.
+
+- **Basic CFG analysis** Automatically identify statement heads which are connected via a control flow.
 
