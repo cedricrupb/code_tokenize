@@ -12,16 +12,16 @@ By relating each token to an AST node, it is possible to extend the program repr
 
 ## Installation
 The package is currently only tested under Python 3. It can be installed via:
-````
+```
 pip install code-tokenize
-````
+```
 
 
 ## Library highlights
 Whether you are on the search for a fast multilingual program tokenizer or want to start your next PLP project, here are some reason why you should build upon ptokenizers:
 
 * **Easy to use** All it takes to tokenize your code is to run a single line:
-````
+```
 import code_tokenize as ctok
 
 ctok.tokenize(
@@ -31,7 +31,7 @@ ctok.tokenize(
     ''',
 lang = "python")
 
-````
+```
 
 * **Most programming languages supported** Since all our tokenizers are backed by [Tree-Sitter](https://tree-sitter.github.io/tree-sitter/) we support a long list of programming languages. This also includes popular languages such as Python, Java and JavaScript.
 
@@ -43,5 +43,4 @@ code(dot)tokenize is currently under active development. To enable application f
 
 - **Syntactic relations** Automatically identify syntactic relations between tokens. This includes read and write relations or structural dependencies.
 
-- **Basic CFG analysis** Automatically identify statement heads which are connected via a control flow.
-
+- **Basic CFG analysis** Automatically identify statement heads which are connected via a control flow

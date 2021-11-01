@@ -1,14 +1,16 @@
-from distutils.core import setup
+from setuptools import setup
+
+with open("README.md", "r") as f:
+    long_description = f.read()
 
 setup(
   name = 'code_tokenize',
   packages = ['code_tokenize'], 
-  version = '0.0.1', 
+  version = '0.0.1.post1', 
   license='apache-2.0',     
-  description = '''code_tokenize is a library for general code tokenization. 
-The capabilities of code_tokenize go beyond pure tokenization by including access to the full abstract syntax tree
-and syntactical analyses.
-                ''',
+  description = 'Fast program tokenization and structural analysis in Python',
+  long_description = long_description,
+  long_description_content_type="text/markdown",
   author = 'Cedric Richter',                   
   author_email = 'cedricr.upb@gmail.com',    
   url = 'https://github.com/cedricrupb/code_tokenize',  
