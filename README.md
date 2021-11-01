@@ -1,6 +1,7 @@
-[head-image]: https://github.com/cedricrupb/ptokenizers/raw/main/resources/code_tokenize.png
+<p align="center">
+  <img height="150" src="https://github.com/cedricrupb/ptokenizers/raw/main/resources/code_tokenize.svg" />
+</p>
 
-![code(dot)tokenize][head-image]
 ------------------------------------------------
 
 ## AST backed tokenization
