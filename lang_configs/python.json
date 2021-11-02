@@ -1,4 +1,11 @@
 {
     "ident_tokens": true,
-    "statement_types": ["*_statement", "*_definition"]
+    "statement_types": ["*_statement", "*_definition"],
+    "path_handler": {
+        "var_def": ["assignment_left", "parameters_*", "global_statement_*", "for_statement_left"],
+        "var_use": ["assignment_right", "return_statement_*", "arguments_*", 
+                     "if_statement_condition", "while_statement_condition",
+                     "for_statement_right"],
+        "func_def": ["call_function"]
+    }
 }

@@ -75,6 +75,7 @@ def _traverse_tree(root_node, stop_fn = None, handle_error = None):
         if not node.children:
             yield node 
 
+
 def traverse_tree(root_node, stop_fn = None, handle_error = None):
     return list(_traverse_tree(root_node, stop_fn, handle_error))[::-1]
 

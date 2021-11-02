@@ -15,6 +15,8 @@ class TokenizationConfig:
             "*_statement", "*_definition", "*_declaration"
         ]
 
+        self.path_handler = None # A dictionary that maps path handler to AST node types
+
         self.update(kwargs)
 
     

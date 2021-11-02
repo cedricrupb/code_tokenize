@@ -55,6 +55,75 @@ class PhasedTokenizer(BaseTokenizer):
         return tokens
 
 
+class PathTokenizer(PhasedTokenizer):
+
+    def __init__(self, config, handler, **kwargs):
+        super().__init__(config, **kwargs)
+        self.handler = handler
+
+        self.path_keys = {}
+        for handler_type, keys in config.path_handler.items():
+            for key in keys:
+                node_type, edge_type = key.rsplit("_", 1)
+                if node_type not in self.path_keys:
+                    self.path_keys[node_type] = {}
+                assert edge_type not in self.path_keys[node_type]
+                self.path_keys[node_type][edge_type] = handler_type
+
+    
+    def _find_handler(self, node, path_handler_cache):
+        # Track path to root / Stop if handler found
+        node_handler = "ast"
+
+        current_node = node
+        while current_node.parent is not None:
+            current_key = T.node_key(current_node)
+            if current_key in path_handler_cache:
+                node_handler = path_handler_cache[current_key]
+                break
+
+            # typ_edge means that we look at the parent relation
+            parent_node = current_node.parent
+            parent_node_type = parent_node.type
+            if parent_node_type not in self.path_keys: 
+                current_node = parent_node
+                continue
+
+            for edge_type, handler in self.path_keys[parent_node_type].items():
+
+                if edge_type == "*":
+                    match = True
+                else:
+                    named_children = parent_node.child_by_field_name(edge_type)
+                    match = named_children == current_node
+
+                if match:
+                    node_handler = handler
+                    break
+
+            if node_handler != "ast":
+                path_handler_cache[current_key] = node_handler
+                break
+            else:
+                current_node = parent_node
+        
+        return node_handler
+
+
+    def tree_tokenize(self, code_tree, code_lines):
+        path_handler_cache = {}
+
+        tokens = []
+        for leaf_node in traverse_tree(code_tree, handle_error = self.error_handler()):
+            node_handler = self._find_handler(leaf_node, path_handler_cache)
+            if node_handler not in self.handler: node_handler = "ast"
+            token = self.handler[node_handler](self.config, leaf_node, code_lines)
+            
+            tokens.append(token)
+
+        return tokens
+
+
 
 def create_tokenizer(config):
 
@@ -62,6 +131,10 @@ def create_tokenizer(config):
 
     if config.ident_tokens:
         post_transform = insert_indent_tokens
+    
+    if config.path_handler:
+        return PathTokenizer(config, get_node_type_handler_index(),
+                pre_transform = pre_transform, post_transform = post_transform)
 
     if pre_transform or post_transform:
         return PhasedTokenizer(config, pre_transform, post_transform)
@@ -94,6 +167,36 @@ def insert_indent_tokens(tokens):
         indent_tokens.append(token)
 
     return indent_tokens
+
+
+# Node type handler --------------------------------------------------------
+
+def get_node_type_handler_index():
+    return {
+        "var_def": vardef_handler,
+        "var_use": varuse_handler,
+        "ast": default_handler
+    }
+
+
+def default_handler(config, leaf_node, code_lines):
+    return ASTToken(config, leaf_node, code_lines)
+
+
+def vardef_handler(config, leaf_node, code_lines):
+
+    if leaf_node.type != "identifier":
+        return default_handler(config, leaf_node, code_lines)
+
+    return T.VariableToken(config, leaf_node, code_lines, is_use = False)
+
+
+def varuse_handler(config, leaf_node, code_lines):
+
+    if leaf_node.type != "identifier":
+        return default_handler(config, leaf_node, code_lines)
+
+    return T.VariableToken(config, leaf_node, code_lines, is_use = True)
 
 
 

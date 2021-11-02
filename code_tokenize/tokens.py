@@ -75,6 +75,7 @@ class ASTToken(Token):
         self.ast_node = ast_node
         self.source_lines = source_lines
         self.root_sequence = None
+        self._type = None
     
     def _create_token(self, node):
         if self.root_sequence is not None:
@@ -87,7 +88,7 @@ class ASTToken(Token):
     def text(self):
         return match_span(self.ast_node, self.source_lines)
 
-    @property
+    @cached_property
     def type(self):
         return self.ast_node.type
 
