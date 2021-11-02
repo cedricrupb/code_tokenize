@@ -1,0 +1,4 @@
+{
+    "ident_tokens": true,
+    "statement_types": ["*_statement", "*_definition"]
+}
