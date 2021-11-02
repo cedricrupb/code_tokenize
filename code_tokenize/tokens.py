@@ -1,36 +1,85 @@
 from .parsers import match_span
 
+# Cache Properties ---------------------------------------------------------
+
+def cached_property(fnc):
+    name = fnc.__name__
+
+    def get_or_compute(self):
+        cache_attr = getattr(self, "_%s" % name, None)
+        if cache_attr is not None: return cache_attr
+        
+        if not hasattr(self, "_cache"): self._cache = {}
+
+        if name not in self._cache:
+            self._cache[name] = fnc(self)
+        
+        return self._cache[name]
+    
+    return property(get_or_compute)
+
 
 # Tokens -------------------------------------------------------------------
 
-
 class Token:
 
-    def __init__(self, config, ast_node, source_lines):
+    def __init__(self, config, text):
+        """Representing a single program token"""
         self.config = config
+        self._text   = text
+        self._type   = "token"
+
+        self.root_sequence = None
+
+    @property
+    def text(self):
+        return self._text
+
+    @property
+    def type(self):
+        return self._type
+
+    def __repr__(self):
+        return self.text
+
+
+class IndentToken(Token):
+
+    def __init__(self, config, new_line_before = True):
+        super().__init__(config, "#INDENT#")
+        self.new_line_before = new_line_before
+        self._type = "indent"
+        
+
+class DedentToken(Token):
+
+    def __init__(self, config, new_line_before = True):
+        super().__init__(config, "#DEDENT#")
+        self.new_line_before = new_line_before
+        self._type = "dedent"
+
+
+class NewlineToken(Token):
+
+    def __init__(self, config):
+        super().__init__(config, "#NEWLINE#")
+        self._type = "newline"
+
+
+# AST backed token  ----------------------------------------------------------------
+
+class ASTToken(Token):
+
+    def __init__(self, config, ast_node, source_lines):
+        super().__init__(config, None)
         self.ast_node = ast_node
         self.source_lines = source_lines
         self.root_sequence = None
-
-        self._cache = {}
-
-    # The sequence of tokens is static. Therefore, we can cache computed results
-    def cached_property(fnc):
-        name = fnc.__name__
-        def load_from_cache(self):
-            if name not in self._cache:
-                self._cache[name] = fnc(self)
-            return self._cache[name]
-
-        return property(load_from_cache)
     
     def _create_token(self, node):
         if self.root_sequence is not None:
             return self.root_sequence.get_token_by_node(node)
-        return Token(self.config, node, self.source_lines)
-
-    def __repr__(self):
-        return self.text
+        return ASTToken(self.config, node, self.source_lines)
 
     # API methods --------------------------------
 
@@ -82,6 +131,13 @@ class Token:
         return self._create_token(current_left)
 
 
+class VariableToken(ASTToken):
+
+    def __init__(self, config, ast_node, source_lines, is_use = False):
+        super().__init__(config, ast_node, source_lines)
+        self.is_use = is_use
+        self._type  = "use_var" if is_use else "def_var"
+
 
 
 # Token Collection -----------------------------------------------------
@@ -95,7 +151,9 @@ class TokenSequence(list):
 
         for tok in self:
             tok.root_sequence = self
-            self._map_nodes[node_key(tok.ast_node)] = tok
+
+            if hasattr(tok, "ast_node"):
+                self._map_nodes[node_key(tok.ast_node)] = tok
 
     def get_token_by_node(self, node):
         return self._map_nodes[node_key(node)]

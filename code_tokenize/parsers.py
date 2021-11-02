@@ -52,13 +52,17 @@ class ASTParser:
 
 # Utils ------------------------------------------------
 
-def _traverse_tree(root_node, stop_fn = None):
+def _traverse_tree(root_node, stop_fn = None, handle_error = None):
 
     if stop_fn is None: stop_fn = lambda x: False
+    if handle_error is None: handle_error = lambda x: None
 
     stack = [root_node]
     while len(stack) > 0:
         node = stack.pop(-1)
+
+        if node.type == "ERROR":
+            if handle_error(node) == "STOP": continue
 
         if node.type == "string":
             yield node
@@ -71,8 +75,8 @@ def _traverse_tree(root_node, stop_fn = None):
         if not node.children:
             yield node 
 
-def traverse_tree(root_node, stop_fn = None):
-    return list(_traverse_tree(root_node, stop_fn))[::-1]
+def traverse_tree(root_node, stop_fn = None, handle_error = None):
+    return list(_traverse_tree(root_node, stop_fn, handle_error))[::-1]
 
 
 def match_span(source_tree, source_lines):
