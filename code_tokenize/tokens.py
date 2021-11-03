@@ -132,12 +132,19 @@ class ASTToken(Token):
         return self._create_token(current_left)
 
 
-class VariableToken(ASTToken):
 
-    def __init__(self, config, ast_node, source_lines, is_use = False):
+class VarUseToken(ASTToken):
+
+    def __init__(self, config, ast_node, source_lines):
         super().__init__(config, ast_node, source_lines)
-        self.is_use = is_use
-        self._type  = "use_var" if is_use else "def_var"
+        self._type  = "use_var" 
+
+
+class VarDefToken(ASTToken):
+
+    def __init__(self, config, ast_node, source_lines):
+        super().__init__(config, ast_node, source_lines)
+        self._type  = "def_var" 
 
 
 
@@ -165,7 +172,7 @@ class TokenSequence(list):
             stmt = []
 
             for tok in self:
-                tok_head = tok.statement_head
+                tok_head = tok.statement_head if hasattr(tok, "statement_head") else current_head
 
                 if tok_head != current_head:
                     if len(stmt) > 0: yield stmt

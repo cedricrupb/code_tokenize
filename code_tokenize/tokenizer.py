@@ -188,7 +188,7 @@ def vardef_handler(config, leaf_node, code_lines):
     if leaf_node.type != "identifier":
         return default_handler(config, leaf_node, code_lines)
 
-    return T.VariableToken(config, leaf_node, code_lines, is_use = False)
+    return T.VarDefToken(config, leaf_node, code_lines)
 
 
 def varuse_handler(config, leaf_node, code_lines):
@@ -196,7 +196,7 @@ def varuse_handler(config, leaf_node, code_lines):
     if leaf_node.type != "identifier":
         return default_handler(config, leaf_node, code_lines)
 
-    return T.VariableToken(config, leaf_node, code_lines, is_use = True)
+    return T.VarUseToken(config, leaf_node, code_lines)
 
 
 
