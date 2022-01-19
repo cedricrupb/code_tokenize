@@ -3,8 +3,8 @@
 </p>
 
 ------------------------------------------------
-> In short: Fast tokenization and structural analysis of
-any programming language
+> Fast tokenization and structural analysis of
+any programming language in Python
 
 Programminng Language Processing (PLP) brings the capabilities of modern NLP systems to the world of programming languages. 
 To achieve high performance PLP systems, existing methods often take advantage of the fully defined nature of programminng languages. Especially the syntactical structure can be exploited to gain knowledge about programs.
