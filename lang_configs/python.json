@@ -5,7 +5,7 @@
         "var_def": ["assignment_left", "parameters_*", "global_statement_*", "for_statement_left"],
         "var_use": ["assignment_right", "return_statement_*", "arguments_*", 
                      "if_statement_condition", "while_statement_condition",
-                     "for_statement_right"],
+                     "for_statement_right", "attribute_object"],
         "func_def": ["call_function"]
     }
 }
