@@ -3,6 +3,7 @@ from .parsers import match_span
 # Cache Properties ---------------------------------------------------------
 
 def cached_property(fnc):
+    """Helper decorator for lazy computing properties"""
     name = fnc.__name__
 
     def get_or_compute(self):
@@ -22,6 +23,28 @@ def cached_property(fnc):
 # Tokens -------------------------------------------------------------------
 
 class Token:
+    """
+    A token represents a single program entity of a given source code
+
+    Attributes
+    ----------
+    text : str
+        text of program token inside the parsed source code
+
+    type : str
+        token type or role inside a program.
+        Often it refers to the type of token, e.g. identifier.
+        Dependent on the tokenization process can also
+        refer to contextual roles like variable definitions.
+
+    config : TokenizerConfig
+        configuration used to parse this token
+
+    root_sequence : TokenSequence
+        back reference to the sequence containing this token
+        Might be None (independent token).
+    
+    """
 
     def __init__(self, config, text):
         """Representing a single program token"""
@@ -44,6 +67,12 @@ class Token:
 
 
 class IndentToken(Token):
+    """
+    Basic token to indicate an indentation
+    
+    Helpful for indentation based languages such as Python.
+
+    """
 
     def __init__(self, config, new_line_before = True):
         super().__init__(config, "#INDENT#")
@@ -52,6 +81,12 @@ class IndentToken(Token):
         
 
 class DedentToken(Token):
+    """
+    Basic token to indicate an dedentation
+    
+    Helpful for indentation based languages such as Python.
+
+    """
 
     def __init__(self, config, new_line_before = True):
         super().__init__(config, "#DEDENT#")
@@ -60,6 +95,12 @@ class DedentToken(Token):
 
 
 class NewlineToken(Token):
+    """
+    Basic token to indicate a newline
+    
+    Helpful for indentation based languages such as Python.
+
+    """
 
     def __init__(self, config):
         super().__init__(config, "#NEWLINE#")
@@ -69,6 +110,37 @@ class NewlineToken(Token):
 # AST backed token  ----------------------------------------------------------------
 
 class ASTToken(Token):
+    """
+    Tokens that are related to leaf nodes inside an AST
+
+    Attributes
+    ----------
+    text : str
+        text of program token inside the parsed source code
+
+    type : str
+        token type or role inside a program.
+        Often it refers to the type of token, e.g. identifier.
+        Dependent on the tokenization process can also
+        refer to contextual roles like variable definitions.
+
+    ast_node : node object
+        node inside an AST that is used to create this token
+
+    statement_head : Token
+        token representing the head (first token) of a statement
+
+    parent_head : Token
+        token representing the head of a parent statement (if existent)
+
+    config : TokenizerConfig
+        configuration used to parse this token
+
+    root_sequence : TokenSequence
+        back reference to the sequence containing this token
+        Might be None (independent token).
+    
+    """
 
     def __init__(self, config, ast_node, source_lines):
         super().__init__(config, None)
@@ -134,6 +206,7 @@ class ASTToken(Token):
 
 
 class VarUseToken(ASTToken):
+    """AST token representing a variable usage (name of variable)"""
 
     def __init__(self, config, ast_node, source_lines):
         super().__init__(config, ast_node, source_lines)
@@ -141,6 +214,7 @@ class VarUseToken(ASTToken):
 
 
 class VarDefToken(ASTToken):
+    """AST token representing a variable definition (name of variable)"""
 
     def __init__(self, config, ast_node, source_lines):
         super().__init__(config, ast_node, source_lines)
@@ -151,6 +225,14 @@ class VarDefToken(ASTToken):
 # Token Collection -----------------------------------------------------
 
 class TokenSequence(list):
+    """
+    Sequence of tokens
+
+    Represent a sequence of tokens. It acts
+    as a list while backreferencing each token
+    in this collection.
+    
+    """
 
     def __init__(self, tokens):
         super().__init__(tokens)
@@ -164,9 +246,11 @@ class TokenSequence(list):
                 self._map_nodes[node_key(tok.ast_node)] = tok
 
     def get_token_by_node(self, node):
+        """Maps a given leaf node back to a token in this sequence."""
         return self._map_nodes[node_key(node)]
 
     def iterstmts(self):
+        """Splits the token sequence into a sequence of statement tokens"""
         def _iter_stmts():
             current_head = None
             stmt = []
