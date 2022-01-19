@@ -20,7 +20,7 @@ pip install code-tokenize
 
 ## Usage
 code.tokenize can tokenize nearly any program code in a few lines of code:
-```
+```python
 import code_tokenize as ctok
 
 # Python
