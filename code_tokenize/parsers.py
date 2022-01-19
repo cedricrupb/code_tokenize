@@ -12,6 +12,30 @@ from git import Repo
 # Automatic loading of Tree-Sitter parsers --------------------------------
 
 def load_language(lang):
+    """
+    Loads a language specification object necessary for tree-sitter.
+
+    Language specifications are loaded from remote or a local cache.
+    If language specification is not contained in cache, the function
+    clones the respective git project and then builds the language specification
+    via tree-sitter.
+    We employ the same language identifier as tree-sitter and
+    lang is translated to a remote repository 
+    (https://github.com/tree-sitter/tree-sitter-[lang]).
+
+    Parameters
+    ----------
+    lang : [python, java, javascript, ...]
+        language identifier specific to tree-sitter.
+        As soon as there is a repository with the same language identifier
+        the language is supported by this function.
+
+    Returns
+    -------
+    Language
+        language specification object
+
+    """
 
     cache_path = _path_to_local()
     
@@ -33,17 +57,65 @@ def load_language(lang):
 # Parser ---------------------------------------------------------------
 
 class ASTParser:
+    """
+    Wrapper for tree-sitter AST parser
+
+    Supports autocompiling the language specification needed 
+    for parsing (see load_language)
+
+    """
 
     def __init__(self, lang):
+        """
+        Autoload language specification and parser
+
+        Parameters
+        ----------
+        lang : [python, java, javascript, ...]
+            Language identifier specific to tree-sitter.
+            Same as for load_language
+        
+        """
+
         self.lang_id = lang
         self.lang    = load_language(lang)
         self.parser  = Parser()
         self.parser.set_language(self.lang)
 
     def parse_bytes(self, data):
+        """
+        Parses source code as bytes into AST
+
+        Parameters
+        ----------
+        data : bytes
+            Source code as a stream of bytes
+
+        Returns
+        -------
+        tree-sitter syntax tree
+
+        """
         return self.parser.parse(data)
 
     def parse(self, source_code):
+        """
+        Parses source code into AST
+
+        Parameters
+        ----------
+        source_code : str
+            Source code as a string
+
+        Returns
+        -------
+        tree-sitter syntax tree
+            tree-sitter object representing the syntax tree
+
+        source_lines
+            a list of code lines for reference
+
+        """
         source_lines = source_code.splitlines()
         source_bytes = source_code.encode("utf-8")
 
@@ -77,10 +149,52 @@ def _traverse_tree(root_node, stop_fn = None, handle_error = None):
 
 
 def traverse_tree(root_node, stop_fn = None, handle_error = None):
+    """
+    Inorder traverses tree only returning leaf nodes
+
+    Parameters
+    ----------
+    root_node : tree-sitter node object
+        Root of the AST to traverse
+    
+    stop_fn : fn node -> bool
+        Function to stop traversing subtrees
+        If function returns tree, stops traversing the tree
+        rooted at the given node
+        Default: None (consider all nodes)
+
+    handle_error : fn node -> str
+        Function to handle nodes indicating errors
+        If function returns STOP, it ignores the subtree
+        rooted at the given node (same as stop_fn).
+        Default: None (ignore all syntactic errors)
+
+    Returns
+    -------
+    Inorder list of leaf nodes
+    
+    """
     return list(_traverse_tree(root_node, stop_fn, handle_error))[::-1]
 
 
 def match_span(source_tree, source_lines):
+    """
+    Greps the source text represented by the given source tree from the original code
+
+    Parameters
+    ----------
+    source_tree : tree-sitter node object
+        Root of the AST which should be used to match the code
+    
+    source_lines : list[str]
+        Source code as a list of source lines
+
+    Returns
+    -------
+    str
+        the source code that is represented by the given source tree
+    
+    """
     
     start_line, start_char = source_tree.start_point
     end_line,   end_char   = source_tree.end_point

@@ -3,6 +3,7 @@ import json
 
 
 class TokenizationConfig:
+    """Helper object to translate arguments of tokenize to config object"""
 
     def __init__(self, lang, **kwargs):
         self.lang = lang
@@ -62,6 +63,7 @@ def _get_config_path():
 
 
 def load_from_lang_config(lang, **kwargs):
+    """Automatically bootstrap config from language specific config"""
     config_path = _get_config_path()
     config_path = os.path.join(config_path, "%s.json" % lang)
 
