@@ -1,37 +1,98 @@
-## Welcome to GitHub Pages
+<p align="center">
+  <img height="150" src="https://github.com/cedricrupb/ptokenizers/raw/main/resources/code_tokenize.svg" />
+</p>
 
-You can use the [editor on GitHub](https://github.com/cedricrupb/code_tokenize/edit/gh-pages/index.md) to maintain and preview the content for your website in Markdown files.
+------------------------------------------------
+> Fast tokenization and structural analysis of
+any programming language in Python
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+Programminng Language Processing (PLP) brings the capabilities of modern NLP systems to the world of programming languages. 
+To achieve high performance PLP systems, existing methods often take advantage of the fully defined nature of programminng languages. Especially the syntactical structure can be exploited to gain knowledge about programs.
 
-### Markdown
+**code.tokenize** provides easy access to the syntactic structure of a program. The tokenizer converts a program into a sequence of program tokens ready for further end-to-end processing.
+By relating each token to an AST node, it is possible to extend the program representation easily with further syntactic information.
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
-
-```markdown
-Syntax highlighted code block
-
-# Header 1
-## Header 2
-### Header 3
-
-- Bulleted
-- List
-
-1. Numbered
-2. List
-
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
+## Installation
+The package is tested under Python 3. It can be installed via:
+```
+pip install code-tokenize
 ```
 
-For more details see [Basic writing and formatting syntax](https://docs.github.com/en/github/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax).
+## Usage
+code.tokenize can tokenize nearly any program code in a few lines of code:
+```python
+import code_tokenize as ctok
 
-### Jekyll Themes
+# Python
+ctok.tokenize(
+    '''
+        def my_func():
+            print("Hello World")
+    ''',
+lang = "python")
 
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/cedricrupb/code_tokenize/settings/pages). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
+# Output: [def, my_func, (, ), :, #NEWLINE#, ...]
 
-### Support or Contact
+# Java
+ctok.tokenize(
+    '''
+        public static void main(String[] args){
+          System.out.println("Hello World");
+        }
+    ''',
+lang = "java", 
+syntax_error = "ignore")
 
-Having trouble with Pages? Check out our [documentation](https://docs.github.com/categories/github-pages-basics/) or [contact support](https://support.github.com/contact) and we’ll help you sort it out.
+# Output: [public, static, void, main, (, String, [, ], args), {, System, ...]
+
+# JavaScript
+ctok.tokenize(
+    '''
+        alert("Hello World");
+    ''',
+lang = "javascript", 
+syntax_error = "ignore")
+
+# Output: [alert, (, "Hello World", ), ;]
+
+
+```
+
+## Supported languages
+code.tokenize employs [tree-sitter](https://tree-sitter.github.io/tree-sitter/) as a backend. Therefore, in principal, any language supported by tree-sitter is also
+supported by a tokenizer in code.tokenize.
+
+For some languages, this library supports additional
+features that are not directly supported by tree-sitter.
+Therefore, we distinguish between three language classes
+and support the following language identifier:
+
+- `native`: python
+- `advanced`: java
+- `basic`: javascript, go, ruby, cpp, c, swift, rust, ...
+
+Languages in the `native` class support all features 
+of this library and are extensively tested. `advanced` languages are tested but do not support the full feature set. Languages of the `basic` class are not tested and
+only support the feature set of the backend. They can still be used for tokenization and AST parsing.
+
+## Release history
+* 0.1.0
+    * The first proper release
+    * CHANGE: Language specific tokenizer configuration
+    * CHANGE: Basic analyses of the program structure and token role
+    * CHANGE: Documentation
+* 0.0.1
+    * Work in progress
+
+## Project Info
+The goal of this project is to provide developer in the
+programming language processing community with easy
+access to program tokenization and AST parsing. This is currently developed as a helper library for internal research projects. Therefore, it will only be updated
+as needed.
+
+Feel free to open an issue if anything unexpected
+happens. 
+
+Distributed under the MIT license. See ``LICENSE`` for more information.
+
+We thank the developer of [tree-sitter](https://tree-sitter.github.io/tree-sitter/) library. Without tree-sitter this project would not be possible. 
