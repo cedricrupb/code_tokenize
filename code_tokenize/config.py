@@ -9,7 +9,8 @@ class TokenizationConfig:
         self.lang = lang
         self.syntax_error = "raise" # Options: raise, warn, ignore
 
-        self.ident_tokens = False # Whether to represent indentations and newlines (Helpful for script languages like Python)
+        self.indent_tokens = False # Whether to represent indentations and newlines (Helpful for script languages like Python)
+        self.num_whitespaces_for_indent = 4
 
         # A list of all statement node defined in the language
         self.statement_types = [

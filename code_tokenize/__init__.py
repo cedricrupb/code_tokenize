@@ -3,6 +3,8 @@ from .parsers import ASTParser
 from .config  import load_from_lang_config
 from .tokenizer import tokenize_tree
 
+from . import visitor
+
 import logging as logger
 
 # Main function --------------------------------

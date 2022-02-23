@@ -224,7 +224,7 @@ def create_tokenizer(config):
 
     pre_transform, post_transform = None, None
 
-    if config.ident_tokens:
+    if config.indent_tokens:
         post_transform = insert_indent_tokens
     
     if config.path_handler:
@@ -248,7 +248,7 @@ def insert_indent_tokens(tokens):
         start_line, start_char = token.ast_node.start_point
         
         if start_line > last_line:
-            line_indent = start_char // 4 # Assume ident with 4 spaces
+            line_indent = start_char // 4 # Assume indent with 4 spaces
             
             if line_indent > last_indent:
                 indent_tokens.append(T.IndentToken(token.config, new_line_before=True))
