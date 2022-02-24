@@ -17,7 +17,7 @@ class TokenizationConfig:
             "*_statement", "*_definition", "*_declaration"
         ]
 
-        self.path_handler = None # A dictionary that maps path handler to AST node types
+        self.visitors = [] # Additional visitor which should be run during analysis
 
         self.update(kwargs)
 
@@ -51,27 +51,4 @@ def load_from_config(config_path, **kwargs):
     config.update(kwargs)
 
     return TokenizationConfig(**config)
-
-
-def _get_config_path():
-    current_path = os.path.abspath(__file__)
-
-    while len(current_path) > 0 and os.path.basename(current_path) != "code_tokenize":
-        current_path = os.path.dirname(current_path)
-    parent_path = os.path.dirname(current_path)
-
-    return os.path.join(parent_path, "lang_configs")
-
-
-def load_from_lang_config(lang, **kwargs):
-    """Automatically bootstrap config from language specific config"""
-    config_path = _get_config_path()
-    config_path = os.path.join(config_path, "%s.json" % lang)
-
-    if os.path.exists(config_path):
-        kwargs["lang"] = lang
-        return load_from_config(config_path, **kwargs)
-
-    return TokenizationConfig(lang, **kwargs)
-
 

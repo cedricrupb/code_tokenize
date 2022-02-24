@@ -175,7 +175,6 @@ class IndentationTokenHandler(TokenHandler):
             self._last_line, self._last_indent = start_line, line_indent
 
         return super().__call__(node)
-
         
 
 # Error handling -----------------------------------------------------------

@@ -1,7 +1,7 @@
 
-from .parsers import ASTParser
-from .config  import load_from_lang_config
+from .parsers   import ASTParser
 from .tokenizer import tokenize_tree
+from .lang      import load_from_lang_config
 
 from . import visitor
 
@@ -61,7 +61,7 @@ def tokenize(source_code, lang = "guess", **kwargs):
     parser = ASTParser(config.lang)
     tree, code = parser.parse(source_code)
     
-    return tokenize_tree(config, tree.root_node, code)
+    return tokenize_tree(config, tree.root_node, code, visitors = config.visitors)
 
 
 
