@@ -28,6 +28,7 @@ to the size of the Python function (in number of tokens). For determining the si
 </p>
 
 We observe that the time for tokenization scales linearly with the number of tokens in the Python function. Even large function with up to 1024 tokens can be tokenized within 10ms.
+Note: The plot only shows runtimes for function implementation that are parsed without an error (Python 2 functions will likely produce an error). However, also functions that raise an exception will also run in a similar time window.
 
 
 ## Complete set
