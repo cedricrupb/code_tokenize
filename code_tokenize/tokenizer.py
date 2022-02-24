@@ -56,6 +56,10 @@ class Tokenizer:
     
     def __init__(self, config):
         self.config    = config
+        self._visitor_factories = []
+
+    def append_visitor(self, visitor_factory):
+        self._visitor_factories.append(visitor_factory)
 
     def _create_token_handler(self, code_lines):
         if self.config.indent_tokens:
@@ -64,7 +68,10 @@ class Tokenizer:
             return TokenHandler(self.config, code_lines)
 
     def _create_tree_visitors(self, token_handler, visitors = None):
-        visitors = visitors or []
+        visitors  = visitors or []
+
+        visitors += [visitor_fn(token_handler) 
+                        for visitor_fn in self._visitor_factories]
     
         return VisitorComposition(
             LeafVisitor(self.config, token_handler),
