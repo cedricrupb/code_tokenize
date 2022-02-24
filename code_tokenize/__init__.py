@@ -40,6 +40,11 @@ def tokenize(source_code, lang = "guess", **kwargs):
         ignore: Ignores syntax errors. Helpful for parsing code snippets.
         Default: raise
 
+    visitors : list[Visitor]
+        Optional list of visitors that should be executed during tokenization
+        Since code is tokenized by traversing the parsed AST, visitors
+        can be used to run further AST based analyses.
+
     Returns
     -------
     TokenSequence
