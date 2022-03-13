@@ -1,8 +1,8 @@
 from . import tokens as T
 from .tokens  import ASTToken, TokenSequence
-from .parsers import traverse_tree
 
 from .visitor import ASTVisitor, ResumingVisitorComposition
+from .lang    import indent_handler_clazz
 
 import logging as logger
 
@@ -62,17 +62,14 @@ class Tokenizer:
         self._visitor_factories.append(visitor_factory)
 
     def _create_token_handler(self, code_lines):
-        if self.config.indent_tokens:
-            return IndentationTokenHandler(self.config, code_lines)
-        else:
-            return TokenHandler(self.config, code_lines)
+        return TokenHandler(self.config, code_lines)
 
     def _create_tree_visitors(self, token_handler, visitors = None):
         visitors  = visitors or []
 
         visitors += [visitor_fn(token_handler) 
                         for visitor_fn in self._visitor_factories]
-    
+
         return ResumingVisitorComposition(
             LeafVisitor(self.config, token_handler),
             ErrorVisitor(self.config),
@@ -91,7 +88,14 @@ class Tokenizer:
 
 def create_tokenizer(config):
     """Function to create tokenizer based on configuration"""
-    return Tokenizer(config)
+    tokenizer = Tokenizer(config)
+
+    if config.indent_tokens:
+        indent_handler = indent_handler_clazz(config.lang)
+        assert indent_handler is not None, "Language %s does not support indentation handling" % config.lang
+        tokenizer.append_visitor(indent_handler)
+
+    return tokenizer
 
 
 # Basic visitor -----------------------------------------------------------
@@ -144,46 +148,15 @@ class TokenHandler:
         return result
     
     def handle_token(self, token):
+        if token.type == "newline" and self._tokens[-1].type in ["indent", "dedent", "newline"]:
+            return # TODO: Blocking double newlines seems to be general. Better solution?
+
         self._tokens.append(token)
 
     def __call__(self, node):
         self.handle_token(
             ASTToken(self.config, node, self.source_code)
         )
-        
-
-class IndentationTokenHandler(TokenHandler):
-
-    def __init__(self, config, source_code):
-        super().__init__(config, source_code)
-        self._last_line   = -1
-        self._last_indent = 0
-
-    def __call__(self, node):
-        start_line, start_char = node.start_point
-
-        if start_line > self._last_line:
-            line_indent = start_char // self.config.num_whitespaces_for_indent
-
-            if line_indent == self._last_indent:
-                super().handle_token(T.NewlineToken(self.config))
-            else:
-
-                add_new_line = True
-
-                while line_indent > self._last_indent:
-                    super().handle_token(T.IndentToken(self.config, new_line_before=add_new_line))
-                    add_new_line = False
-                    self._last_indent += 1
-
-                while line_indent < self._last_indent:
-                    super().handle_token(T.DedentToken(self.config, new_line_before = line_indent == self._last_indent - 1))
-                    self._last_indent -= 1
-
-            self._last_line = start_line
-
-        return super().__call__(node)
-        
 
 # Error handling -----------------------------------------------------------
 

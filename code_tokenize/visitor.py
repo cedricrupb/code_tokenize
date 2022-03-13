@@ -26,7 +26,7 @@ class ASTVisitor:
         return visitor_fn(node) is not False
 
     def on_leave(self, node):
-        leave_fn = getattr(self, "leave_%s" % node, self.leave)
+        leave_fn = getattr(self, "leave_%s" % node.type, self.leave)
         return leave_fn(node)
 
     # Navigation ----------------------------------------------------------------

@@ -4,6 +4,8 @@ from ..config import TokenizationConfig
 from .python import create_tokenization_config as pytok_config
 from .java   import create_tokenization_config as jvtok_config
 
+from .python.indent import IndentVisitor as PythonIndentVisitor
+
 
 def load_from_lang_config(lang, **kwargs):
     
@@ -13,3 +15,7 @@ def load_from_lang_config(lang, **kwargs):
 
     base_config.update(kwargs)
     return base_config
+
+
+def indent_handler_clazz(lang):
+    if lang == "python": return PythonIndentVisitor
