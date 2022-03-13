@@ -2,7 +2,7 @@ from . import tokens as T
 from .tokens  import ASTToken, TokenSequence
 from .parsers import traverse_tree
 
-from .visitor import ASTVisitor, VisitorComposition
+from .visitor import ASTVisitor, ResumingVisitorComposition
 
 import logging as logger
 
@@ -73,7 +73,7 @@ class Tokenizer:
         visitors += [visitor_fn(token_handler) 
                         for visitor_fn in self._visitor_factories]
     
-        return VisitorComposition(
+        return ResumingVisitorComposition(
             LeafVisitor(self.config, token_handler),
             ErrorVisitor(self.config),
             *visitors
@@ -156,7 +156,7 @@ class IndentationTokenHandler(TokenHandler):
 
     def __init__(self, config, source_code):
         super().__init__(config, source_code)
-        self._last_line   = 0
+        self._last_line   = -1
         self._last_indent = 0
 
     def __call__(self, node):
@@ -165,14 +165,22 @@ class IndentationTokenHandler(TokenHandler):
         if start_line > self._last_line:
             line_indent = start_char // self.config.num_whitespaces_for_indent
 
-            if line_indent > self._last_indent:
-                super().handle_token(T.IndentToken(self.config, new_line_before=True))
-            elif line_indent < self._last_indent:
-                super().handle_token(T.DedentToken(self.config, new_line_before = True))
-            else:
+            if line_indent == self._last_indent:
                 super().handle_token(T.NewlineToken(self.config))
+            else:
 
-            self._last_line, self._last_indent = start_line, line_indent
+                add_new_line = True
+
+                while line_indent > self._last_indent:
+                    super().handle_token(T.IndentToken(self.config, new_line_before=add_new_line))
+                    add_new_line = False
+                    self._last_indent += 1
+
+                while line_indent < self._last_indent:
+                    super().handle_token(T.DedentToken(self.config, new_line_before = line_indent == self._last_indent - 1))
+                    self._last_indent -= 1
+
+            self._last_line = start_line
 
         return super().__call__(node)
         
