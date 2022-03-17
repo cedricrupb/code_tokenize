@@ -17,6 +17,9 @@ class IndentVisitor(ASTVisitor):
     def leave_block(self, block):
         self.handler.handle_token(DedentToken(self.config))
 
+    def leave_comment(self, comment):
+        self.handler.handle_token(NewlineToken(self.config))
+
     def leave(self, node):
         if not node.type.endswith('statement'): return
         self.handler.handle_token(NewlineToken(self.config))
