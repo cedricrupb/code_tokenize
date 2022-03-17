@@ -95,4 +95,14 @@ happens.
 
 Distributed under the MIT license. See ``LICENSE`` for more information.
 
+This project was developed as part of our research related to:
+```bibtex
+@inproceedings{richter2022tssb,
+  title={TSSB-3M: Mining single statement bugs at massive scale},
+  author={Cedric Richter, Heike Wehrheim},
+  booktitle={MSR},
+  year={2022}
+}
+```
+
 We thank the developer of [tree-sitter](https://tree-sitter.github.io/tree-sitter/) library. Without tree-sitter this project would not be possible. 
