@@ -1,10 +1,10 @@
-from . import tokens as T
-from .tokens  import ASTToken, TokenSequence
-
-from .visitor import ASTVisitor, ResumingVisitorComposition
-from .lang    import indent_handler_clazz
 
 import logging as logger
+from code_ast.visitor import ASTVisitor, ResumingVisitorComposition
+
+from .tokens  import ASTToken, TokenSequence
+from .lang    import indent_handler_clazz
+
 
 
 # Interface ----------------------------------------------------------------

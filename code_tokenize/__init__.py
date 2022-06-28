@@ -1,10 +1,8 @@
 
-from .parsers   import ASTParser
+from code_ast.parsers   import ASTParser
+
 from .tokenizer import tokenize_tree
 from .lang      import load_from_lang_config
-
-from . import visitor
-from .visitor import ASTVisitor, VisitorComposition
 
 import logging as logger
 

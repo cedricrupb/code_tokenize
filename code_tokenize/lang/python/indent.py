@@ -1,6 +1,6 @@
 """Hierarchical indentation independent of the concrete program formatting"""
 
-from ...visitor import ASTVisitor
+from code_ast.visitor import ASTVisitor
 from ...tokens  import IndentToken, DedentToken, NewlineToken
 
 

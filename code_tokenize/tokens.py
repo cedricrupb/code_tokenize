@@ -1,4 +1,4 @@
-from .parsers import match_span
+from code_ast.parsers import match_span
 
 # Cache Properties ---------------------------------------------------------
 
