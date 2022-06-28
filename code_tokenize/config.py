@@ -1,6 +1,8 @@
 
 import json
 
+from .lang.base_visitors import LeafVisitor
+
 
 class TokenizationConfig:
     """Helper object to translate arguments of tokenize to config object"""
@@ -17,7 +19,7 @@ class TokenizationConfig:
             "*_statement", "*_definition", "*_declaration"
         ]
 
-        self.visitors = [] # Additional visitor which should be run during analysis
+        self.visitors = [LeafVisitor] # visitor classes which should be run during analysis
 
         self.update(kwargs)
 

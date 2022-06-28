@@ -3,8 +3,6 @@ import logging as logger
 from code_ast.visitor import ASTVisitor, ResumingVisitorComposition
 
 from .tokens  import ASTToken, TokenSequence
-from .lang    import indent_handler_clazz
-
 
 
 # Interface ----------------------------------------------------------------
@@ -66,12 +64,14 @@ class Tokenizer:
 
     def _create_tree_visitors(self, token_handler, visitors = None):
         visitors  = visitors or []
+        visitors += self._visitor_factories
 
-        visitors += [visitor_fn(token_handler) 
-                        for visitor_fn in self._visitor_factories]
+        visitors  = [visitor_fn(token_handler) 
+                        if callable(visitor_fn) 
+                            else visitor_fn
+                        for visitor_fn in visitors]
 
         return ResumingVisitorComposition(
-            LeafVisitor(self.config, token_handler),
             ErrorVisitor(self.config),
             *visitors
         )
@@ -88,14 +88,7 @@ class Tokenizer:
 
 def create_tokenizer(config):
     """Function to create tokenizer based on configuration"""
-    tokenizer = Tokenizer(config)
-
-    if config.indent_tokens:
-        indent_handler = indent_handler_clazz(config.lang)
-        assert indent_handler is not None, "Language %s does not support indentation handling" % config.lang
-        tokenizer.append_visitor(indent_handler)
-
-    return tokenizer
+    return Tokenizer(config)
 
 
 # Basic visitor -----------------------------------------------------------
@@ -103,19 +96,12 @@ def create_tokenizer(config):
 
 class LeafVisitor(ASTVisitor):
 
-    def __init__(self, config, node_handler):
-        self.config = config
+    def __init__(self, node_handler):
         self.node_handler = node_handler
 
     def visit_string(self, node):
         self.node_handler(node)
         return False
-
-    def visit_unary_operator(self, node):
-        # TODO Use a custom leaf visitor
-        if node.children[-1].type == "integer":
-            self.node_handler(node)
-            return False
 
     def visit(self, node):
         if node.child_count == 0:

@@ -43,3 +43,12 @@ class JavaTokenizationTestCase(TestCase):
         tokens = ctok.tokenize("public int myFunc(int x){\n    x = x + 1;\n    return x;\n}", lang = "java", syntax_error = "ignore")
         expected = ["public", "int", "myFunc", "", "(", "int", "x", ")", "{", "x", "=", "x", "+", "1", ";", "return", "x", ";", "}"]
         self.assertEqual(expected, [str(t) for t in tokens])
+
+
+class GoTokenizationTest(TestCase):
+
+    def test_tokenize1(self):
+        tokens = ctok.tokenize('func main(){\n    tip1 := "test"\n}', lang = "go")
+        expected = ["func", "main", "(", ")", "{", "tip1", ":=", '"test"', "#NEWLINE#", "}"]
+
+        self.assertEqual(expected, [str(t) for t in tokens])
