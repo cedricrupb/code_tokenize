@@ -14,7 +14,7 @@ setup(
   author = 'Cedric Richter',                   
   author_email = 'cedricr.upb@gmail.com',    
   url = 'https://github.com/cedricrupb/code_tokenize',  
-  download_url = 'https://github.com/cedricrupb/code_tokenize/archive/refs/tags/v0.1.0.tar.gz', 
+  download_url = 'https://github.com/cedricrupb/code_tokenize/archive/refs/tags/v0.2.0.tar.gz', 
   keywords = ['code', 'tokenization', 'tokenize', 'program', 'language processing'], 
   install_requires=[          
           'tree_sitter',
