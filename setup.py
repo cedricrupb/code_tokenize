@@ -1,11 +1,11 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 with open("README.md", "r") as f:
     long_description = f.read()
 
 setup(
   name = 'code_tokenize',
-  packages = ['code_tokenize'], 
+  packages = find_packages(exclude=['tests']), 
   version = '0.2.0', 
   license='MIT',     
   description = 'Fast program tokenization and structural analysis in Python',
