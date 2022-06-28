@@ -1,7 +1,8 @@
 
-from .parsers import ASTParser
-from .config  import load_from_lang_config
+from code_ast.parsers   import ASTParser
+
 from .tokenizer import tokenize_tree
+from .lang      import load_from_lang_config
 
 import logging as logger
 
@@ -38,6 +39,11 @@ def tokenize(source_code, lang = "guess", **kwargs):
         ignore: Ignores syntax errors. Helpful for parsing code snippets.
         Default: raise
 
+    visitors : list[Visitor]
+        Optional list of visitors that should be executed during tokenization
+        Since code is tokenized by traversing the parsed AST, visitors
+        can be used to run further AST based analyses.
+
     Returns
     -------
     TokenSequence
@@ -59,7 +65,7 @@ def tokenize(source_code, lang = "guess", **kwargs):
     parser = ASTParser(config.lang)
     tree, code = parser.parse(source_code)
     
-    return tokenize_tree(config, tree.root_node, code)
+    return tokenize_tree(config, tree.root_node, code, visitors = config.visitors)
 
 
 

@@ -130,3 +130,6 @@ dmypy.json
 
 # Project specific ignore
 build/
+
+data/
+.DS_Store

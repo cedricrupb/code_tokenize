@@ -6,7 +6,7 @@ with open("README.md", "r") as f:
 setup(
   name = 'code_tokenize',
   packages = ['code_tokenize'], 
-  version = '0.1.0', 
+  version = '0.2.0', 
   license='MIT',     
   description = 'Fast program tokenization and structural analysis in Python',
   long_description = long_description,
@@ -19,7 +19,8 @@ setup(
   install_requires=[          
           'tree_sitter',
           'GitPython',
-          'requests'
+          'requests',
+          'code-ast'
       ],
   classifiers=[
     'Development Status :: 3 - Alpha',    

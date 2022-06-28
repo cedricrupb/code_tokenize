@@ -1,13 +1,13 @@
-from . import tokens as T
-from .tokens  import ASTToken, TokenSequence
-from .parsers import traverse_tree
 
 import logging as logger
+from code_ast.visitor import ASTVisitor, ResumingVisitorComposition
+
+from .tokens  import ASTToken, TokenSequence
 
 
 # Interface ----------------------------------------------------------------
 
-def tokenize_tree(config, code_tree, code_lines):
+def tokenize_tree(config, code_tree, code_lines, visitors = None):
     """
     Transforms AST tree into token sequence
 
@@ -37,11 +37,13 @@ def tokenize_tree(config, code_tree, code_lines):
         A sequence of program tokens representing the given program
 
     """
-    return create_tokenizer(config)(code_tree, code_lines)
+    return create_tokenizer(config)(code_tree, code_lines, visitors = visitors)
+
 
 # Tokenize ----------------------------------------------------------------
 
-class BaseTokenizer:
+
+class Tokenizer:
     """
     Basic tokenizer for parsing AST
     
@@ -51,249 +53,102 @@ class BaseTokenizer:
     """
     
     def __init__(self, config):
-        self.config = config
+        self.config    = config
+        self._visitor_factories = []
 
-    def preprocess(self, code_tree, code_lines):
-        return code_tree, code_lines
+    def append_visitor(self, visitor_factory):
+        self._visitor_factories.append(visitor_factory)
 
-    def error_handler(self):
-        if self.config.syntax_error == "raise":  return raise_syntax_error
-        elif self.config.syntax_error == "warn": return warn_syntax_error
-        else:                                    return None
+    def _create_token_handler(self, code_lines):
+        return TokenHandler(self.config, code_lines)
 
-    def tree_tokenize(self, code_tree, code_lines):
-        return [ASTToken(self.config, node, code_lines) for node in traverse_tree(code_tree, handle_error=self.error_handler())]
+    def _create_tree_visitors(self, token_handler, visitors = None):
+        visitors  = visitors or []
+        visitors += self._visitor_factories
 
-    def postprocess(self, tokens):
-        return tokens
+        visitors  = [visitor_fn(token_handler) 
+                        if callable(visitor_fn) 
+                            else visitor_fn
+                        for visitor_fn in visitors]
 
-    def __call__(self, code_tree, code_lines):
-        
-        code_tree, code_lines = self.preprocess(code_tree, code_lines)
-        tokens = self.tree_tokenize(code_tree, code_lines)
-        tokens = self.postprocess(tokens)
+        return ResumingVisitorComposition(
+            ErrorVisitor(self.config),
+            *visitors
+        )
 
-        return TokenSequence(tokens)
+    def __call__(self, code_tree, code_lines, visitors = None):
+        token_handler = self._create_token_handler(code_lines)
+        tree_visitor  = self._create_tree_visitors(token_handler, visitors)
 
+        # Run tree visitor
+        tree_visitor.walk(code_tree)
 
-class PhasedTokenizer(BaseTokenizer):
-    """
-    Extension of the base tokenizer to support phased analyses
-
-    This tokenizer supports preprocessing of the AST
-    tree and post-processing of the token sequence.
-    
-    """
-
-    def __init__(self, config, pre_transform = None, post_transform = None):
-        """
-        Initializes the phased tokenizer
-
-        Parameters
-        ----------
-        config : TokenizationConfig
-            configuration to guide the tokenization process
-
-        pre_transform : fn root_node, source_lines -> root_node, source_lines
-            Function to preprocess the given AST before tokenization
-            Default: None (No preprocessing)
-
-        post_transform : fn list[Token] -> list[Token]
-            Function to postprocess the produced token sequence
-            Default: None (No postprocessing)
-    
-        """
-        super().__init__(config)
-        self.pre_transform = pre_transform
-        self.post_transform = post_transform
-
-    def preprocess(self, code_tree, code_lines):
-        if self.pre_transform:
-            code_tree, code_lines = self.pre_transform(code_tree, code_lines)
-        return super().preprocess(code_tree, code_lines)
-
-    def postprocess(self, tokens):
-        tokens = super().postprocess(tokens)
-
-        if self.post_transform:
-            return self.post_transform(tokens)
-        
-        return tokens
-
-
-class PathTokenizer(PhasedTokenizer):
-    """
-    AST path based code tokenizer
-
-    The tokenization process is dependent on the AST path
-    leading to the leaf node / token.
-
-    """
-
-    def __init__(self, config, handler, **kwargs):
-        """
-        Initializes the path tokenizer
-
-        Parameters
-        ----------
-        config : TokenizationConfig
-            configuration to guide the tokenization process
-
-        handler : dict[str, Tokenizer]
-            Maps a path key to a handler function
-            Handler function should map a leaf node to a program token
-
-        pre_transform : fn root_node, source_lines -> root_node, source_lines
-            Function to preprocess the given AST before tokenization
-            Default: None (No preprocessing)
-
-        post_transform : fn list[Token] -> list[Token]
-            Function to postprocess the produced token sequence
-            Default: None (No postprocessing)
-    
-        """
-        super().__init__(config, **kwargs)
-        self.handler = handler
-
-        self.path_keys = {}
-        for handler_type, keys in config.path_handler.items():
-            for key in keys:
-                node_type, edge_type = key.rsplit("_", 1)
-                if node_type not in self.path_keys:
-                    self.path_keys[node_type] = {}
-                assert edge_type not in self.path_keys[node_type]
-                self.path_keys[node_type][edge_type] = handler_type
-
-    
-    def _find_handler(self, node, path_handler_cache):
-        # Track path to root / Stop if handler found
-        node_handler = "ast"
-
-        current_node = node
-        while current_node.parent is not None:
-            current_key = T.node_key(current_node)
-            if current_key in path_handler_cache:
-                node_handler = path_handler_cache[current_key]
-                break
-
-            # typ_edge means that we look at the parent relation
-            parent_node = current_node.parent
-            parent_node_type = parent_node.type
-            if parent_node_type not in self.path_keys: 
-                current_node = parent_node
-                continue
-
-            for edge_type, handler in self.path_keys[parent_node_type].items():
-
-                if edge_type == "*":
-                    match = True
-                else:
-                    named_children = parent_node.child_by_field_name(edge_type)
-                    match = named_children == current_node
-
-                if match:
-                    node_handler = handler
-                    break
-
-            if node_handler != "ast":
-                path_handler_cache[current_key] = node_handler
-                break
-            else:
-                current_node = parent_node
-        
-        return node_handler
-
-
-    def tree_tokenize(self, code_tree, code_lines):
-        path_handler_cache = {}
-
-        tokens = []
-        for leaf_node in traverse_tree(code_tree, handle_error = self.error_handler()):
-            node_handler = self._find_handler(leaf_node, path_handler_cache)
-            if node_handler not in self.handler: node_handler = "ast"
-            token = self.handler[node_handler](self.config, leaf_node, code_lines)
-            
-            tokens.append(token)
-
-        return tokens
-
+        return token_handler.tokens()
 
 
 def create_tokenizer(config):
     """Function to create tokenizer based on configuration"""
+    return Tokenizer(config)
 
-    pre_transform, post_transform = None, None
 
-    if config.ident_tokens:
-        post_transform = insert_indent_tokens
+# Basic visitor -----------------------------------------------------------
+
+
+class LeafVisitor(ASTVisitor):
+
+    def __init__(self, node_handler):
+        self.node_handler = node_handler
+
+    def visit_string(self, node):
+        self.node_handler(node)
+        return False
+
+    def visit(self, node):
+        if node.child_count == 0:
+            self.node_handler(node)
+            return False
+
+
+class ErrorVisitor(ASTVisitor):
+
+    def __init__(self, config):
+        self.config = config
+
+    def visit_ERROR(self, node):
+
+        if self.config.syntax_error == "raise":
+            raise_syntax_error(node)
+            return
+
+        if self.config.syntax_error == "warn":
+            warn_syntax_error(node)
+            return
+
+# Node handler ------------------------------------------------------------
+
+class TokenHandler:
+
+    def __init__(self, config, source_code):
+        self.config = config
+        self.source_code = source_code
+
+        self._tokens = []
+
+    def tokens(self):
+        result = TokenSequence(self._tokens)
+        self._tokens = []
+        return result
     
-    if config.path_handler:
-        return PathTokenizer(config, get_node_type_handler_index(),
-                pre_transform = pre_transform, post_transform = post_transform)
+    def handle_token(self, token):
+        if token.type == "newline" and self._tokens[-1].type in ["indent", "dedent", "newline"]:
+            return # TODO: Blocking double newlines seems to be general. Better solution?
 
-    if pre_transform or post_transform:
-        return PhasedTokenizer(config, pre_transform, post_transform)
-    return BaseTokenizer(config)
+        self._tokens.append(token)
 
-
-# Transforms -----------------------------------------------------------
-
-
-def insert_indent_tokens(tokens):
-    last_line  = 0
-    last_indent = 0
-
-    indent_tokens = []
-    for token in tokens:
-        start_line, start_char = token.ast_node.start_point
-        
-        if start_line > last_line:
-            line_indent = start_char // 4 # Assume ident with 4 spaces
-            
-            if line_indent > last_indent:
-                indent_tokens.append(T.IndentToken(token.config, new_line_before=True))
-            elif line_indent < last_indent:
-                indent_tokens.append(T.DedentToken(token.config, new_line_before = True))
-            else:
-                indent_tokens.append(T.NewlineToken(token.config))
-            
-            last_line, last_indent = start_line, line_indent
-        
-        indent_tokens.append(token)
-
-    return indent_tokens
-
-
-# Node type handler --------------------------------------------------------
-
-def get_node_type_handler_index():
-    return {
-        "var_def": vardef_handler,
-        "var_use": varuse_handler,
-        "ast": default_handler
-    }
-
-
-def default_handler(config, leaf_node, code_lines):
-    return ASTToken(config, leaf_node, code_lines)
-
-
-def vardef_handler(config, leaf_node, code_lines):
-
-    if leaf_node.type != "identifier":
-        return default_handler(config, leaf_node, code_lines)
-
-    return T.VarDefToken(config, leaf_node, code_lines)
-
-
-def varuse_handler(config, leaf_node, code_lines):
-
-    if leaf_node.type != "identifier":
-        return default_handler(config, leaf_node, code_lines)
-
-    return T.VarUseToken(config, leaf_node, code_lines)
-
-
+    def __call__(self, node):
+        self.handle_token(
+            ASTToken(self.config, node, self.source_code)
+        )
 
 # Error handling -----------------------------------------------------------
 
