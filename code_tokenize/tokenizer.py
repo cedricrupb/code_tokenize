@@ -110,7 +110,13 @@ class LeafVisitor(ASTVisitor):
     def visit_string(self, node):
         self.node_handler(node)
         return False
-    
+
+    def visit_unary_operator(self, node):
+        # TODO Use a custom leaf visitor
+        if node.children[-1].type == "integer":
+            self.node_handler(node)
+            return False
+
     def visit(self, node):
         if node.child_count == 0:
             self.node_handler(node)
