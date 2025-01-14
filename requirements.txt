@@ -1,4 +1,4 @@
-tree_sitter==0.19.0
-requests==2.25.1
-GitPython==3.1.18
-code_ast==0.1.0
+tree_sitter==0.21.3
+requests>=2.32.0
+GitPython>=3.1.41
+code_ast>=0.1.1

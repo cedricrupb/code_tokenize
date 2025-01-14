@@ -1,5 +1,4 @@
-
-from code_ast.parsers   import ASTParser
+from code_ast import ASTParser, ASTVisitor
 
 from .tokenizer import tokenize_tree
 from .lang      import load_from_lang_config
